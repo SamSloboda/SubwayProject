@@ -25,7 +25,7 @@ public class DataCleaning1 {
         job.setReducerClass(DataCleaningReducer1.class);
         job.setNumReduceTasks(1);
 
-        job.setOutputKeyClass(Text.class);
+        job.setOutputKeyClass(NullWritable.class);
         job.setOutputValueClass(Text.class);
 
         System.exit(job.waitForCompletion(true) ? 0 : 1);
