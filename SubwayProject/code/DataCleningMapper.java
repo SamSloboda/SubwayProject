@@ -57,29 +57,64 @@ public class DataCleaningMapper extends Mapper<LongWritable, Text, NullWritable,
         // Iterate through each line
         // Set line as array delimited
         String[] line = value.toString().split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
+        boolean violentCrime = false;
         // Check if there is an error in the csv
-        
 
-
-
-        if (line.length < 16) {
+        if(!line[3].eqauls("")){     //checking for missing date ==> DROPPING IF MISSING
+            String date = line[3];
+        }else{
             return;
         }
-        // Filter out non-felonies
-        if (!line[7].equalsIgnoreCase("f")) {
+
+        if(!line[4].eqauls("")){    //checking for missing time ==> DROPPING IF MISSING
+            String time = line[4];
+        }else{
             return;
         }
-        // build output
-        StringBuilder mapOutput = new StringBuilder();
-        mapOutput.append(line[0] + ","); // Arrest Key
-        mapOutput.append(line[1] + ","); // Arrest Date
-        mapOutput.append(line[2] + ","); // Arrest classification code
-        mapOutput.append(line[3] + ","); // Arrest classification code description
-        mapOutput.append(line[8] + ","); // Arrest bourough
-        mapOutput.append(line[16] + ","); // Latitude
-        mapOutput.append(line[17]); // Longitude
 
-        context.write(NullWritable.get(), new Text(mapOutput.toString()));
+        if(!line[107].eqauls("") && !line[108].eqauls("")){ //checking if the record has geolocation. If not, dropping imidiatelly.
+            String xcoord = line[107];
+            String ycoord = line[108];
+        }else{
+            return;
+        }
+
+        // checking if the detailCM matches with the Hash Map of considered violent crimes, if yes it is concidered as violent crime. If it's missing we are still keeping this record and marking it as UNKNOWN.
+        if(crimeIDcrimeDescriptions.containsKey(line[111])){
+            String crimeDescription = crimeIDcrimeDescriptions.get(line[111]);
+            violentCrime = true;
+        }else if(line[111].eqauls("")){
+            String crimeDescription = "UNKNOWN";
+        }
+
+        //checking if any weapon was used. If yes, it will be automatically considered violent crime.
+        if(line[26].equalsIgnoreCase("Y") || line[27].equalsIgnoreCase("Y") || line[28].equalsIgnoreCase("Y") || line[29].equalsIgnoreCase("Y") || line[30].equalsIgnoreCase("Y") || line[31].equalsIgnoreCase("Y")){
+            violentCrime = true;
+        }
+
+        //checking if physical force was used. If yes, it will be automatically considered violent crime.
+        if(line[32].equalsIgnoreCase("Y") || line[33].equalsIgnoreCase("Y") || line[34].equalsIgnoreCase("Y") || line[35].equalsIgnoreCase("Y") || line[36].equalsIgnoreCase("Y") || line[37].equalsIgnoreCase("Y") || line[38].equalsIgnoreCase("Y") || line[39].equalsIgnoreCase("Y") || line[40].equalsIgnoreCase("Y")){
+            violentCrime = true;
+        }
+
+        //checking if REASON FOR FRISK was VIOLENT CRIME SUSPECTED. If yes, consider it as violent crime.
+        if(line[44].equalsIgnoreCase("Y") || line[44].eqauls("")){
+            violentCrime = true;
+        }
+
+
+
+        if (violentCrime){
+            // build output
+            StringBuilder mapOutput = new StringBuilder();
+            mapOutput.append(date + ","); // Date
+            mapOutput.append(time + ","); // Time
+            mapOutput.append(crimeDescription + ","); // Description of Crime
+            mapOutput.append(xcoord + ","); // Xcoords
+            mapOutput.append(ycoord); // Ycoords
+
+            context.write(NullWritable.get(), new Text(mapOutput.toString()));
+        }
     }
 
 }
