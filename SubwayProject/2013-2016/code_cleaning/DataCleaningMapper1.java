@@ -27,11 +27,12 @@ public class DataCleaningMapper1 extends Mapper<LongWritable, Text, NullWritable
             return;
         }
 
-        if((line[4].length() == 3) || (line[4].length() == 4)){    //checking for missing time ==> DROPPING IF MISSING
-            if(line[4].length()== 3){
-                time = "0" + line[4]; //the format will be always 4 digits
-            }else if(line[4].length()== 4){
-                time = line[4];
+        String interDate = line[4].trim();
+        if((interDate.length() == 3) || (interDate.length() == 4)){    //checking for missing time ==> DROPPING IF MISSING
+            if(interDate.length()== 3){
+                time = "0" + interDate; //the format will be always 4 digits
+            }else if(interDate.length()== 4){
+                time = interDate;
             } 
         }else{
             return;
